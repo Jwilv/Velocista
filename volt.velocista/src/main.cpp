@@ -22,7 +22,7 @@ void setup()
  //}
  map(A0,0,1024,1024,0);
   // configure the sensors
-  qtr.setTypeRC();
+  qtr.setTypeAnalog();
   qtr.setSensorPins((const uint8_t[]){A7, A6, A5, A4, A3, A2, A1, A0}, SensorCount);
   //qtr.setEmitterPin(2);
 
@@ -63,7 +63,7 @@ void loop()
 {
   // read calibrated sensor values and obtain a measure of the line position
   // from 0 to 5000 (for a white line, use readLineWhite() instead)
-  uint16_t position = qtr.readLineBlack(sensorValues);
+  uint16_t position = qtr.readLineWhite(sensorValues);
 
   // print the sensor values as numbers from 0 to 1000, where 0 means maximum
   // reflectance and 1000 means minimum reflectance, followed by the line
