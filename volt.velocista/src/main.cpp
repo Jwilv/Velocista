@@ -26,6 +26,11 @@ int setPoint = 3500;
 
 int correcionRueda = 0;
 
+float maxSpeed = 200;
+
+float minSpeed = 15;
+
+
 int kp = 0;
 int kd = 0;
 int ki = 0;
@@ -51,7 +56,7 @@ void Calibration()
   delay(500);
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
-  for (uint16_t i = 0; i < 400; i++)
+  for (uint16_t i = 0; i < 200; i++)
   {
     qtr.calibrate();
   }
@@ -107,8 +112,8 @@ void loop()
     if (inicio)
     {
       Serial.println("velocidad de inicio");
-      motorDer->GoAvance(30);
-      motorIzq->GoAvance(30);
+      //motorDer->GoAvance(30);
+      //motorIzq->GoAvance(30);
     }
 
     while (true)
@@ -118,51 +123,46 @@ void loop()
       Serial.println("posision : ");
       Serial.println(position);
       proporcional = (position) - (setPoint);
-      Serial.println("proporcional : ");
-      Serial.println(proporcional);
+      //Serial.println("proporcional : ");
+      //Serial.println(proporcional);
 
       derivativa = (proporcional - last);
-      Serial.println("derrivativa : ");
-      Serial.println(derivativa);
+      //Serial.println("derrivativa : ");
+      //Serial.println(derivativa);
       integral = (proporcional + last);
-      Serial.println("integral : ");
-      Serial.println(integral);
+      //Serial.println("integral : ");
+      //Serial.println(integral);
       speed = (proporcional * kp) + (derivativa * kd) + (integral * ki);
       Serial.println("speed : ");
       Serial.println(speed);
-      if (speed > topSpeed)
-      {
-        speed = topSpeed;
-        Serial.println("speed con top speed : ");
-        Serial.println(speed);
-      }
-      if (speed < -topSpeed){
-        Serial.println("speed con - top speed : ");
-        Serial.println(speed);
-        speed = -topSpeed;}
+        int velocidadGanancia = (topSpeed + speed);
+        int velocidadPerdida =  (topSpeed - speed);  
+        if(velocidadGanancia > maxSpeed ) velocidadGanancia = maxSpeed;
+        if(velocidadPerdida < minSpeed)
 
       if (position > setPoint)
-      {
-        Serial.println("speed - top motor derecho: ");
+      { Serial.println("caso doblar derecha");
+        Serial.println("velocidad motor derecho: ");
         Serial.println(topSpeed - speed);
-        Serial.println("speed + top motor izquierdo: ");
+        Serial.println("velocidad motor izquierdo: ");
         Serial.println(topSpeed + speed);
-        motorDer->GoAvance(topSpeed - speed);
-        motorIzq->GoAvance(topSpeed + speed);
+        //motorDer->GoAvance(topSpeed - speed);
+        //motorIzq->GoAvance(topSpeed + speed);
       }
       if (position < setPoint)
       {
-        Serial.println("speed + top motor derecho: ");
+        Serial.println("caso doblar izquierda");
+        Serial.println("velocidad motor derecho: ");
         Serial.println(topSpeed + speed);
-        Serial.println("speed - top motor izquierdo: ");
+        Serial.println("velocidad motor izquierdo: ");
         Serial.println(topSpeed - speed);
-        motorDer->GoAvance(topSpeed + speed);
-        motorIzq->GoAvance(topSpeed - speed);
+       // motorDer->GoAvance(topSpeed + speed);
+        //motorIzq->GoAvance(topSpeed - speed);
       }
 
       last = proporcional;
-      Serial.println("last: ");
-        Serial.println(last);
+    //      Serial.println("last: ");
+      //  Serial.println(last);
         delay(1000);
     }
   }
