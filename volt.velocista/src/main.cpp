@@ -4,6 +4,8 @@
 
 #define DEGUB false
 
+#define DEBUG_CALCULOS false
+
 #define BUTTON 4
 
 #define MOTOR_DIR_DER 11
@@ -17,26 +19,28 @@
 int velocidadGanancia;
 int velocidadPerdida;
 
-int velocidadPunta = 200;
+int velocidadPunta = 80;
 
-int maxSpeed = 230;
+int maxSpeed = 240;
 
 int minSpeed = 5;
 
 unsigned long speed;
 
-float proporcional ;
-float derivativa ;
-float integral ;
+float proporcional;
+float derivativa;
+float integral;
+
+int equiparamiento = 15;
 
 int setPoint = 2000;
 
 int setPointMax = 2400;
 int setPointMin = 1800;
 
-float kp = 0.01;
+float kp = 0.017;
 float kd = 0;
-float ki = 0;
+float ki = 0.001;
 
 float last = 0;
 
@@ -76,7 +80,8 @@ MOTOR *motorIzq = new MOTOR(MOTOR_DIR_IZQ, MOTOR_PWM_IZQ);
 
 void setup()
 { // configure the sensors
-  Serial.begin(9600);
+  if (DEBUG_CALCULOS)
+    Serial.begin(9600);
   Calibration();
   if (DEGUB)
   {
@@ -150,42 +155,51 @@ void loop()
 
         // integral = (proporcional + last);
 
-       float  speed = (proporcional * kp) + (derivativa * kd) + (integral * ki);
+        float speed = (proporcional * kp) + (derivativa * kd) + (integral * ki);
         Serial.println("speed : ");
         Serial.println(speed);
-       int  velocidadGanancia = (velocidadPunta + speed);
-       int  velocidadPerdida = (velocidadPunta - speed);
-        if (velocidadGanancia > maxSpeed) velocidadGanancia = maxSpeed;
-        if (velocidadPerdida < minSpeed) velocidadPerdida = minSpeed;
+        int velocidadGanancia = (velocidadPunta + speed);
+        int velocidadPerdida = (velocidadPunta - speed);
+        if (velocidadGanancia > maxSpeed)
+          velocidadGanancia = maxSpeed;
+        if (velocidadPerdida < minSpeed)
+          velocidadPerdida = minSpeed;
         bool doblarDer = position > setPointMax;
-        bool doblarIzq = position < setPointMin;  
+        bool doblarIzq = position < setPointMin;
         bool recta = (!doblarDer && !doblarIzq);
         if (doblarDer)
         {
-          Serial.println("caso doblar Derecha");
-          Serial.println("velocidad motor derecho: ");
-          Serial.println(velocidadPerdida);
-          Serial.println("velocidad motor izquierdo: ");
-          Serial.println(velocidadGanancia);
-          // motorDer->GoAvance(velocidadGanancia);
-          // motorIzq->GoAvance(velocidadPerdida);
+          if (DEBUG_CALCULOS)
+          {
+            Serial.println("caso doblar Derecha");
+            Serial.println("velocidad motor derecho: ");
+            Serial.println(velocidadPerdida);
+            Serial.println("velocidad motor izquierdo: ");
+            Serial.println(velocidadGanancia);
+          }
+          motorDer->GoAvance(velocidadPerdida);
+          motorIzq->GoAvance(velocidadGanancia + equiparamiento);
         }
         if (doblarIzq)
-        {
+        { if(DEBUG_CALCULOS){
           Serial.println("caso doblar izquierda");
           Serial.println("velocidad motor derecho ");
-          Serial.println(velocidadPerdida); //cambiar esto yaaaaa los motores
+          Serial.println(velocidadPerdida); // cambiar esto yaaaaa los motores
           Serial.println("velocidad motor izquierdo ");
           Serial.println(velocidadGanancia);
-          // motorDer->GoAvance(velocidadGanancia);
-          // motorIzq->GoAvance(velocidadPerdida);
+        }
+          
+          motorDer->GoAvance(velocidadPerdida);
+          motorIzq->GoAvance(velocidadGanancia + equiparamiento);
         }
         if (recta)
-        {
+        {if(DEBUG_CALCULOS){
           Serial.println(" caso recta");
           Serial.println(velocidadPunta);
-          // motorDer->GoAvance(velocidadPunta);
-          // motorIzq->GoAvance(velocidadPunta);
+        }
+          
+          motorDer->GoAvance(velocidadPunta);
+          motorIzq->GoAvance(velocidadPunta + equiparamiento);
         }
 
         last = proporcional;
@@ -194,7 +208,7 @@ void loop()
         Serial.println("posision : ");
         Serial.println(position);
 
-        delay(1000);
+        if(DEBUG_CALCULOS)delay(1000);
       }
     }
   }
