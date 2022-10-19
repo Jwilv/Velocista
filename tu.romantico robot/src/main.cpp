@@ -46,76 +46,76 @@ void loop()
 
     if (in == KPS0001){
       Serial.println("se subio kp");
-
+      kp+=0.001;
     }
     if (in == KDS0001){
       Serial.println("se subio kd");
-
+    kd+=0.001;
     }
     if (in == KIS0001){
       Serial.println("se subio ki");
-
+    ki+=0.001;
     }
     if (in == KPR0001){
       Serial.println("se bajo kp");
-
+    kp-=0.001;
     }
     if (in == KDR0001){
       Serial.println("se bajo kd");
-
+      kd-=0.001;
     }
     if (in == KIR0001){
       Serial.println("se bajo ki");
-
+     ki -= 0.001;
     }
     if (in == KPS001){
       Serial.println("se subio kp 0.01");
-
+      kp+=0.01;
     }
     if (in == KDS001){
       Serial.println("se subio kd 0.01");
-
+    kd+=0.01;
     }
     if (in == KIS001){
       Serial.println("se subio ki 0.01");
-
+     ki+=0.01;
     }
       /////////////////////////////////////////
       if (in == KPR001){
       Serial.println("se bajo kp 0.01");
-
+      kp-=0.01;
       }
     if (in == KDR001){
       Serial.println("se bajo kd 0.01");
-
+      kd-=0.01;
     }
     if (in == KIR001){
       Serial.println("se bajo ki 0.01");
-
+      ki-=0.01;
     }
     if (in == KPS01){
       Serial.println("se subio kp 0.1");
-
+      kp+=0.1;
     }
     if (in == KDS01){
       Serial.println("se subio kd 0.1");
-
+      kd+=0.1;
     }
     if (in == KIS01){
       Serial.println("se subio ki 0.1");
-
+      ki+=0.1;
     }
     if (in == KPR01){
       Serial.println("se bajo kp 0.1");
-
+      kp-=0.1;
     }
     if (in == KDR01){
       Serial.println("se bajo kd 0.1");
-
+      kd-=0.1;
     }
     if (in == KIR01){
       Serial.println("se bajo ki 0.1 ");
-
+      ki-=0.1;
     }
   }
 
