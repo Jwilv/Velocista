@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include <SoftwareSerial.h>
 
-float kp = 1;
 #define KPS0001 '1'
 #define KDS0001 '2'
 #define KIS0001 '3'
@@ -122,4 +121,8 @@ void loop()
   if (Serial.available())
     bt.write(Serial.read());
   // bt.println(kp);
+  Serial.println(kp);
+  Serial.println(kd);
+  Serial.println(ki);
+  delay(500);
 }
