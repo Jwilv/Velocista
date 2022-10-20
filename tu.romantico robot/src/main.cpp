@@ -1,5 +1,62 @@
 #include <Arduino.h>
 #include <SoftwareSerial.h>
+#include <Motor.h>
+#include <QTRSensors.h>
+
+#define DEGUB 0
+
+#define BTON 1
+
+#define DEBUG_CALCULOS 0
+
+#define BUTTON 4
+
+#define MOTOR_DIR_DER 11
+#define MOTOR_PWM_DER 10
+
+#define MOTOR_DIR_IZQ 9
+#define MOTOR_PWM_IZQ 6
+
+#define LED_BUILTIN 13
+
+int velocidadGanancia;
+int velocidadPerdida;
+
+int velocidadPunta = 60;
+
+int maxSpeed = 240;
+
+int minSpeed = 5;
+
+float speed;
+
+float proporcional;
+float derivativa;
+float integral;
+
+int equiparamiento = 20;
+
+int setPoint = 2000;
+
+int setPointMax = 2400;
+int setPointMin = 1800;
+
+float kp = 0.017;
+float kd = 0.17;
+float ki = 0.001;
+
+float last = 0;
+
+int arranque = 30;
+
+bool btnPress;
+
+int position;
+
+QTRSensors qtr;
+
+const uint8_t SensorCount = 7;
+uint16_t sensorValues[SensorCount];
 
 #define KPS0001 '1'
 #define KDS0001 '2'
@@ -21,108 +78,220 @@
 #define KIR01 '('
 
 
-SoftwareSerial bt(11, 10);
+SoftwareSerial bt(3, 2);
 
-float kp = 0.12;
-float kd = 0.15;
-float ki = 0.3;
+  void Comunication(){
+    if (bt.available())
+  {
+    char in = bt.read();
+    if (in == KPS0001) kp+=0.001;
+    if (in == KDS0001) kd+=0.001;
+    if (in == KIS0001) ki+=0.001;
+    if (in == KPR0001) kp-=0.001;
+    if (in == KDR0001) kd-=0.001;
+    if (in == KIR0001) ki -= 0.001;
+    if (in == KPS001) kp+=0.01;
+    if (in == KDS001) kd+=0.01;
+    if (in == KIS001) ki+=0.01;
+    /////////////////////////////////////////
+    if (in == KPR001) kp-=0.01;
+    if (in == KDR001) kd-=0.01;
+    if (in == KIR001) ki-=0.01;
+    if (in == KPS01) kp+=0.1;
+    if (in == KDS01) kd+=0.1;
+    if (in == KIS01) ki+=0.1;
+    if (in == KPR01) kp-=0.1;
+    if (in == KDR01) kd-=0.1;
+    if (in == KIR01) ki-=0.1;
+  }
+  }
+
+/////////////////////////////
+
+// calibration
+
+void Calibration()
+{
+  qtr.setTypeAnalog();
+  qtr.setSensorPins((const uint8_t[]){A6, A5, A4, A3, A2, A1, A0}, SensorCount);
+
+  delay(500);
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH);
+  for (uint16_t i = 0; i < 400; i++)
+  {
+    qtr.calibrate();
+  }
+  digitalWrite(LED_BUILTIN, LOW); //
+
+  // print the calibration minimum values measured when emitters were on
+}
+
+// constructors
+MOTOR *motorDer = new MOTOR(MOTOR_DIR_DER, MOTOR_PWM_DER);
+MOTOR *motorIzq = new MOTOR(MOTOR_DIR_IZQ, MOTOR_PWM_IZQ);
 
 void setup()
-{
-  // put your setup code here, to run once:
-  Serial.begin(9600);
-  Serial.println("listo");
-  bt.begin(9600);
+{ // configure the sensors
+
+/*
+  if (DEBUG_CALCULOS) Serial.begin(9600);
+  Calibration();
+ // Serial.begin(9600);
+
+  if(BTON)bt.begin(9600);
+  if (DEGUB)
+  {
+    Serial.begin(9600);
+    for (uint8_t i = 0; i < SensorCount; i++)
+    {
+      Serial.print(qtr.calibrationOn.minimum[i]);
+      Serial.print(' ');
+    }
+    Serial.println();
+  }
+
+  // print the calibration maximum values measured when emitters were on
+  if (DEGUB)
+  {
+    for (uint8_t i = 0; i < SensorCount; i++)
+    {
+      Serial.print(qtr.calibrationOn.maximum[i]);
+      Serial.print(' ');
+    }
+    Serial.println();
+    Serial.println();
+  }
+
+  pinMode(BUTTON, INPUT);
+
+*/
+  delay(500);
 }
+
+bool inicio = true;
 
 void loop()
 {
-  if (bt.available())
-  {
-    Serial.write(bt.read());
-    char in = bt.read();
-    // in.trim();
 
-    if (in == KPS0001){
-      Serial.println("se subio kp");
-      kp+=0.001;
-    }
-    if (in == KDS0001){
-      Serial.println("se subio kd");
-    kd+=0.001;
-    }
-    if (in == KIS0001){
-      Serial.println("se subio ki");
-    ki+=0.001;
-    }
-    if (in == KPR0001){
-      Serial.println("se bajo kp");
-    kp-=0.001;
-    }
-    if (in == KDR0001){
-      Serial.println("se bajo kd");
-      kd-=0.001;
-    }
-    if (in == KIR0001){
-      Serial.println("se bajo ki");
-     ki -= 0.001;
-    }
-    if (in == KPS001){
-      Serial.println("se subio kp 0.01");
-      kp+=0.01;
-    }
-    if (in == KDS001){
-      Serial.println("se subio kd 0.01");
-    kd+=0.01;
-    }
-    if (in == KIS001){
-      Serial.println("se subio ki 0.01");
-     ki+=0.01;
-    }
-      /////////////////////////////////////////
-      if (in == KPR001){
-      Serial.println("se bajo kp 0.01");
-      kp-=0.01;
+ motorDer->GoAvance(30);
+  motorIzq->GoAvance(30 + 20);
+
+/*  
+  //Serial.println(digitalRead(BUTTON));
+  btnPress = digitalRead(BUTTON) == 0;
+  int position = qtr.readLineBlack(sensorValues);
+  if(BTON)Comunication();
+  // print the sensor values as numbers from 0 to 1000, where 0 means maximum
+  // reflectance and 1000 means minimum reflectance, followed by the line
+  // position
+
+  for (uint8_t i = 0; i < SensorCount; i++)
+  {
+    Serial.print(sensorValues[i]);
+    Serial.print('\t');
+  }
+  Serial.println(position);
+
+  //delay(250);
+  if (btnPress)
+  {
+    if (true)
+    {
+      Serial.println("iniciado");
+      if (inicio)
+      {
+        Serial.println("velocidad de inicio");
+        motorDer->GoAvance(30);
+        motorIzq->GoAvance(30);
       }
-    if (in == KDR001){
-      Serial.println("se bajo kd 0.01");
-      kd-=0.01;
-    }
-    if (in == KIR001){
-      Serial.println("se bajo ki 0.01");
-      ki-=0.01;
-    }
-    if (in == KPS01){
-      Serial.println("se subio kp 0.1");
-      kp+=0.1;
-    }
-    if (in == KDS01){
-      Serial.println("se subio kd 0.1");
-      kd+=0.1;
-    }
-    if (in == KIS01){
-      Serial.println("se subio ki 0.1");
-      ki+=0.1;
-    }
-    if (in == KPR01){
-      Serial.println("se bajo kp 0.1");
-      kp-=0.1;
-    }
-    if (in == KDR01){
-      Serial.println("se bajo kd 0.1");
-      kd-=0.1;
-    }
-    if (in == KIR01){
-      Serial.println("se bajo ki 0.1 ");
-      ki-=0.1;
+
+      while (true)
+      {
+        inicio = false;
+        position = qtr.readLineBlack(sensorValues);
+        if(DEBUG_CALCULOS){
+          Serial.println("posision : ");
+        Serial.println(position);
+        }
+        proporcional = (position) - (setPoint);
+        if(DEBUG_CALCULOS){
+        Serial.println("proporcional : ");
+        Serial.println(proporcional);
+        }
+
+        derivativa = (proporcional - last);
+
+        // integral = (proporcional + last);
+
+        float speed = (proporcional * kp) + (derivativa * kd) + (integral * ki);
+        if(DEBUG_CALCULOS){
+        Serial.println("speed : ");
+        Serial.println(speed);
+        }
+        int velocidadGanancia = (velocidadPunta + speed);
+        int velocidadPerdida = (velocidadPunta - speed);
+        if (velocidadGanancia > maxSpeed) velocidadGanancia = maxSpeed;
+        if (velocidadPerdida < minSpeed) velocidadPerdida = minSpeed;
+        bool doblarDer = position > setPointMax;
+        bool doblarIzq = position < setPointMin;
+        bool recta = (!doblarDer && !doblarIzq);
+        if (doblarDer)
+        {
+          if (DEBUG_CALCULOS)
+          {
+            Serial.println("caso doblar Derecha");
+            Serial.println("velocidad motor derecho: ");
+            Serial.println(velocidadPerdida);
+            Serial.println("velocidad motor izquierdo: ");
+            Serial.println(velocidadGanancia);
+          }
+          motorDer->GoAvance(velocidadPerdida);
+          motorIzq->GoAvance(velocidadGanancia + equiparamiento);
+        }
+        if (doblarIzq)
+        { if(DEBUG_CALCULOS){
+          Serial.println("caso doblar izquierda");
+          Serial.println("velocidad motor derecho ");
+          Serial.println(velocidadPerdida); // cambiar esto yaaaaa los motores
+          Serial.println("velocidad motor izquierdo ");
+          Serial.println(velocidadGanancia);
+        }
+          
+          motorDer->GoAvance(velocidadPerdida);
+          motorIzq->GoAvance(velocidadGanancia + equiparamiento);
+        }
+        if (recta){
+          if(DEBUG_CALCULOS){
+          Serial.println(" caso recta");
+          Serial.println(velocidadPunta);
+        }
+          
+          motorDer->GoAvance(velocidadPunta);
+          motorIzq->GoAvance(velocidadPunta + equiparamiento);
+        }
+
+        last = proporcional;
+
+        position = qtr.readLineBlack(sensorValues);
+        if(DEBUG_CALCULOS){
+        Serial.println("posision : ");
+        Serial.println(position);
+        }
+        
+        if(BTON){
+          bt.println("valor kp");
+          bt.println(kp);
+          bt.println("valor kd");
+          bt.println(kd);
+          bt.println("valor ki");
+          bt.println(ki);
+        }
+        if(DEBUG_CALCULOS)delay(1000);
+      }
     }
   }
-
-  if (Serial.available())
-    bt.write(Serial.read());
-  // bt.println(kp);
-  Serial.println(kp);
-  Serial.println(kd);
-  Serial.println(ki);
-  delay(500);
+  */
 }
+
+
