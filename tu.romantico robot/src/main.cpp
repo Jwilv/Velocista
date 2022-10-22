@@ -258,7 +258,7 @@ for (uint8_t i = 0; i < SensorCount; i++)
         { if(DEBUG_CALCULOS){
           Serial.println("caso doblar izquierda");
           Serial.println("velocidad motor derecho ");
-          Serial.println(velocidadPerdida); // cambiar esto yaaaaa los motores
+          Serial.println(velocidadPerdida); 
           Serial.println("velocidad motor izquierdo ");
           Serial.println(velocidadGanancia);
         }
