@@ -22,11 +22,11 @@
 int velocidadGanancia;
 int velocidadPerdida;
 
-int velocidadPunta = 80;
+int velocidadPunta = 70;
 
-int maxSpeed = 222;
+int maxSpeed = 150;
 
-int minSpeed = 33;
+int minSpeed = 20;
 
 float speed;
 
@@ -35,17 +35,17 @@ float derivativa;
 float integral;
 
 //se cree que 33 para una velocidad de 80 
-int equiparamiento = 33;
+int equiparamiento = 20;
 
 
 
 int setPoint = 2000;
 
-int setPointMax = 2400;
+int setPointMax = 2200;
 int setPointMin = 1800;
 
 float kp = 0.017;
-float kd = 0.17;
+float kd = 0.15;
 float ki = 0.001;
 
 float last = 0;
@@ -175,13 +175,10 @@ void setup()
 bool inicio = true;
 
 void loop()
-{
-  //motorDer->GoAvance(30);
-  //motorIzq->GoAvance(30 + 20);
-
+{ 
   //Serial.println(digitalRead(BUTTON));
   btnPress = digitalRead(BUTTON) == 0;
-  int position = qtr.readLineBlack(sensorValues);
+  int position = qtr.readLineWhite(sensorValues);
   if(BTON)Comunication();
   // print the sensor values as numbers from 0 to 1000, where 0 means maximum
   // reflectance and 1000 means minimum reflectance, followed by the line
@@ -206,7 +203,7 @@ for (uint8_t i = 0; i < SensorCount; i++)
       if (inicio)
       {
         //Serial.println("velocidad de inicio");
-        motorDer->GoAvance(30);
+        motorDer->GoAvance(30 + equiparamiento);
         motorIzq->GoAvance(30);
       }
 
@@ -214,7 +211,7 @@ for (uint8_t i = 0; i < SensorCount; i++)
       {
         if(BTON)Comunication();
         inicio = false;
-        position = qtr.readLineBlack(sensorValues);
+        position = qtr.readLineWhite(sensorValues);
         if(DEBUG_CALCULOS){
           Serial.println("posision : ");
         Serial.println(position);
@@ -227,7 +224,7 @@ for (uint8_t i = 0; i < SensorCount; i++)
 
         derivativa = (proporcional - last);
 
-        // integral = (proporcional + last);
+        integral = (proporcional + last);
 
         float speed = (proporcional * kp) + (derivativa * kd) + (integral * ki);
         if(DEBUG_CALCULOS){
@@ -245,26 +242,26 @@ for (uint8_t i = 0; i < SensorCount; i++)
         {
           if (DEBUG_CALCULOS)
           {
-            Serial.println("caso doblar Derecha");
-            Serial.println("velocidad motor derecho: ");
-            Serial.println(velocidadPerdida);
-            Serial.println("velocidad motor izquierdo: ");
-            Serial.println(velocidadGanancia);
+            bt.println("caso doblar Derecha");
+            bt.println("velocidad motor derecho: ");
+            bt.println(velocidadPerdida + equiparamiento);
+            bt.println("velocidad motor izquierdo: ");
+            bt.println(velocidadGanancia);
           }
           motorDer->GoAvance(velocidadPerdida + equiparamiento);
-          motorIzq->GoAvance(velocidadGanancia - equiparamiento);
+          motorIzq->GoAvance(velocidadGanancia);
         }
         if (doblarIzq)
         { if(DEBUG_CALCULOS){
-          Serial.println("caso doblar izquierda");
-          Serial.println("velocidad motor derecho ");
-          Serial.println(velocidadPerdida); 
-          Serial.println("velocidad motor izquierdo ");
-          Serial.println(velocidadGanancia);
+          bt.println("caso doblar izquierda");
+          bt.println("velocidad motor derecho ");
+          bt.println(velocidadPerdida + equiparamiento); 
+          bt.println("velocidad motor izquierdo ");
+          bt.println(velocidadGanancia);
         }
           
           motorDer->GoAvance(velocidadPerdida + equiparamiento);
-          motorIzq->GoAvance(velocidadGanancia - equiparamiento);
+          motorIzq->GoAvance(velocidadGanancia );
         }
         if (recta){
           if(DEBUG_CALCULOS){
@@ -272,13 +269,13 @@ for (uint8_t i = 0; i < SensorCount; i++)
           Serial.println(velocidadPunta);
         }
           
-          motorDer->GoAvance(velocidadPunta + equiparamiento);
-          motorIzq->GoAvance(velocidadPunta - equiparamiento);
+          motorDer->GoAvance(velocidadPunta + equiparamiento );
+          motorIzq->GoAvance(velocidadPunta);
         }
 
         last = proporcional;
 
-        position = qtr.readLineBlack(sensorValues);
+        position = qtr.readLineWhite(sensorValues);
         if(DEBUG_CALCULOS){
         Serial.println("posision : ");
         Serial.println(position);
