@@ -5,7 +5,7 @@
 
 #define DEGUB 0
 
-#define BTON 1
+#define BTON 0
 
 #define DEBUG_CALCULOS 0
 
@@ -22,11 +22,11 @@
 int velocidadGanancia;
 int velocidadPerdida;
 
-int velocidadPunta = 60;
+int velocidadPunta = 80;
 
-int maxSpeed = 240;
+int maxSpeed = 222;
 
-int minSpeed = 5;
+int minSpeed = 33;
 
 float speed;
 
@@ -34,7 +34,10 @@ float proporcional;
 float derivativa;
 float integral;
 
-int equiparamiento = 20;
+//se cree que 33 para una velocidad de 80 
+int equiparamiento = 33;
+
+
 
 int setPoint = 2000;
 
@@ -134,7 +137,7 @@ MOTOR *motorIzq = new MOTOR(MOTOR_DIR_IZQ, MOTOR_PWM_IZQ);
 void setup()
 { // configure the sensors
 
-/*
+
   if (DEBUG_CALCULOS) Serial.begin(9600);
   Calibration();
  // Serial.begin(9600);
@@ -165,19 +168,17 @@ void setup()
 
   pinMode(BUTTON, INPUT);
 
-*/
-  delay(500);
+
+ // delay(500);
 }
 
 bool inicio = true;
 
 void loop()
 {
+  //motorDer->GoAvance(30);
+  //motorIzq->GoAvance(30 + 20);
 
- motorDer->GoAvance(30);
-  motorIzq->GoAvance(30 + 20);
-
-/*  
   //Serial.println(digitalRead(BUTTON));
   btnPress = digitalRead(BUTTON) == 0;
   int position = qtr.readLineBlack(sensorValues);
@@ -185,29 +186,33 @@ void loop()
   // print the sensor values as numbers from 0 to 1000, where 0 means maximum
   // reflectance and 1000 means minimum reflectance, followed by the line
   // position
-
-  for (uint8_t i = 0; i < SensorCount; i++)
+/*
+for (uint8_t i = 0; i < SensorCount; i++)
   {
     Serial.print(sensorValues[i]);
     Serial.print('\t');
   }
   Serial.println(position);
 
+*/
+  
+
   //delay(250);
   if (btnPress)
   {
     if (true)
     {
-      Serial.println("iniciado");
+      //Serial.println("iniciado");
       if (inicio)
       {
-        Serial.println("velocidad de inicio");
+        //Serial.println("velocidad de inicio");
         motorDer->GoAvance(30);
         motorIzq->GoAvance(30);
       }
 
       while (true)
       {
+        if(BTON)Comunication();
         inicio = false;
         position = qtr.readLineBlack(sensorValues);
         if(DEBUG_CALCULOS){
@@ -246,8 +251,8 @@ void loop()
             Serial.println("velocidad motor izquierdo: ");
             Serial.println(velocidadGanancia);
           }
-          motorDer->GoAvance(velocidadPerdida);
-          motorIzq->GoAvance(velocidadGanancia + equiparamiento);
+          motorDer->GoAvance(velocidadPerdida + equiparamiento);
+          motorIzq->GoAvance(velocidadGanancia - equiparamiento);
         }
         if (doblarIzq)
         { if(DEBUG_CALCULOS){
@@ -258,8 +263,8 @@ void loop()
           Serial.println(velocidadGanancia);
         }
           
-          motorDer->GoAvance(velocidadPerdida);
-          motorIzq->GoAvance(velocidadGanancia + equiparamiento);
+          motorDer->GoAvance(velocidadPerdida + equiparamiento);
+          motorIzq->GoAvance(velocidadGanancia - equiparamiento);
         }
         if (recta){
           if(DEBUG_CALCULOS){
@@ -267,8 +272,8 @@ void loop()
           Serial.println(velocidadPunta);
         }
           
-          motorDer->GoAvance(velocidadPunta);
-          motorIzq->GoAvance(velocidadPunta + equiparamiento);
+          motorDer->GoAvance(velocidadPunta + equiparamiento);
+          motorIzq->GoAvance(velocidadPunta - equiparamiento);
         }
 
         last = proporcional;
@@ -291,7 +296,7 @@ void loop()
       }
     }
   }
-  */
+  
 }
 
 
