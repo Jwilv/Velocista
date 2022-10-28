@@ -224,7 +224,7 @@ for (uint8_t i = 0; i < SensorCount; i++)
 
         derivativa = (proporcional - last);
 
-        integral = (proporcional + last);
+        integral = (integral + proporcional);
 
         float speed = (proporcional * kp) + (derivativa * kd) + (integral * ki);
         if(DEBUG_CALCULOS){
