@@ -24,16 +24,16 @@ bool inicio = true;
 float pidIzq;
 float pidDer;
 
-int equiparamiento = 20;
+int equiparamiento = 0;
 
 
 int velocidadPuntaDer = 70;
 
 int velocidadPuntaIzq = velocidadPuntaDer + equiparamiento;
 
-int maxSpeed = 150;
+int maxSpeed =255;
 
-int minSpeed = 20;
+int minSpeed = 0;
 
 float speed;
 
@@ -45,8 +45,8 @@ float integral;
 
 int setPoint = 2000;
 
-float kp = 0;
-float kd = 0;
+float kp = 0.034;
+float kd = 0.65;
 float ki = 0;
 
 float last = 0;
@@ -59,7 +59,7 @@ int position;
 
 QTRSensors qtr;
 
-const uint8_t SensorCount = 7;
+const uint8_t SensorCount = 8;
 uint16_t sensorValues[SensorCount];
 
 #define KPS0001 '1'
@@ -134,7 +134,7 @@ void Comunication()
 void Calibration()
 {
   qtr.setTypeAnalog();
-  qtr.setSensorPins((const uint8_t[]){A6, A5, A4, A3, A2, A1, A0}, SensorCount);
+  qtr.setSensorPins((const uint8_t[]){A7,A6, A5, A4, A3, A2, A1, A0}, SensorCount);
 
   delay(500);
   pinMode(LED_BUILTIN, OUTPUT);
