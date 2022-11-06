@@ -264,7 +264,6 @@ void loop()
       motorIzq->GoAvance(pidIzq);
 ////////////////////////////////
       last = proporcional;
-      position = qtr.readLineWhite(sensorValues);
       if (DEBUG_CALCULOS)
       {
         Serial.println("posision : ");
