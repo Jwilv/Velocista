@@ -21,14 +21,16 @@
 
 bool inicio = true;
 
-float pidIzq;
-float pidDer;
+
 
 int equiparamiento = 0;
 
 int velocidadPuntaDer = 70;
 
-int velocidadPuntaIzq = velocidadPuntaDer + equiparamiento;
+int velocidadPuntaIzq = velocidadPuntaDer - equiparamiento;
+
+float pidIzq;
+float pidDer;
 
 int maxSpeed = 255;
 
@@ -40,10 +42,10 @@ float proporcional;
 float derivativa;
 float integral;
 
-int setPoint = 2000;
+int setPoint = 2500;
 
-float kp = 0.015;
-float kd = 0;
+float kp = 0.017;
+float kd = 0.30;
 float ki = 0;
 
 float last = 0;
@@ -86,25 +88,25 @@ void Comunication()
     {
         char in = bt.read();
         if (in == KPS0001)  kp += 0.001;
-        if (in == KDS0001) kd += 0.001;
-        if (in == KIS0001)  ki += 0.001;
-        if (in == KPR0001)  kp -= 0.001;
-        if (in == KDR0001)  kd -= 0.001;
-        if (in == KIR0001)  ki -= 0.001;
-        if (in == KPS001)  kp += 0.01;
-        if (in == KDS001) kd += 0.01;
-        if (in == KIS001)  ki += 0.01;
-        if (in == KPR001) kp -= 0.01;
-        if (in == KDR001) kd -= 0.01;
-        if (in == KIR001) ki -= 0.01;
-        if (in == KPS01) kp += 0.1;
-        if (in == KDS01) kd += 0.1;
-        if (in == KIS01) ki += 0.1;
-        if (in == KPR01)  kp -= 0.1;
-        if (in == KDR01) kd -= 0.1;
-        if (in == KIR01) ki -= 0.1;
-    }
-}
+        else if (in == KDS0001) kd += 0.001;
+        else if (in == KIS0001)  ki += 0.001;
+        else if (in == KPR0001)  kp -= 0.001;
+        else if (in == KDR0001)  kd -= 0.001;
+        else if (in == KIR0001)  ki -= 0.001;
+        else if (in == KPS001)  kp += 0.01;
+        else if (in == KDS001) kd += 0.01;
+        else if (in == KIS001)  ki += 0.01;
+        else if (in == KPR001) kp -= 0.01;
+        else if (in == KDR001) kd -= 0.01;
+        else if (in == KIR001) ki -= 0.01;
+        else if (in == KPS01) kp += 0.1;
+        else if (in == KDS01) kd += 0.1;
+        else if (in == KIS01) ki += 0.1;
+        else if (in == KPR01)  kp -= 0.1;
+        else if (in == KDR01) kd -= 0.1;
+        else if (in == KIR01) ki -= 0.1;
+    } 
+} 
 
 /////////////////////////////
 
@@ -113,12 +115,12 @@ void Comunication()
 void Calibration()
 {
     qtr.setTypeAnalog();
-    qtr.setSensorPins((const uint8_t[]){A7, A6, A5, A4, A3, A2, A1, A0}, SensorCount);
+    qtr.setSensorPins((const uint8_t[]){A7,A6, A5, A4, A3, A2, A1,A0}, SensorCount);
 
     delay(500);
     pinMode(LED_BUILTIN, OUTPUT);
     digitalWrite(LED_BUILTIN, HIGH);
-    for (uint16_t i = 0; i < 400; i++)
+    for (uint16_t i = 0; i < 200; i++)
     {
         qtr.calibrate();
     }
@@ -134,7 +136,10 @@ MOTOR *motorIzq = new MOTOR(MOTOR_DIR_IZQ, MOTOR_PWM_IZQ);
 void setup()
 { // configure the sensors
 
-    if (DEBUG_CALCULOS) Serial.begin(9600);
+    if (DEBUG_CALCULOS){
+        Serial.begin(9600);
+        Serial.println("calibrando");
+    } 
     Calibration();
     if (BTON) bt.begin(9600);
     if (DEGUB)
@@ -161,12 +166,13 @@ void setup()
     }
 
     pinMode(BUTTON, INPUT);
+    Serial.println("end setup");
 }
 
 void loop()
 {
     btnPress = digitalRead(BUTTON) == 0;
-    int position = qtr.readLineWhite(sensorValues);
+    int position = qtr.readLineBlack(sensorValues);
     if (BTON)
         Comunication();
     // print the sensor values as numbers from 0 to 1000, where 0 means maximum
@@ -192,56 +198,63 @@ void loop()
             if (BTON)
                 Comunication();
             inicio = false;
-            position = qtr.readLineWhite(sensorValues);
+            position = qtr.readLineBlack(sensorValues);
             if (DEBUG_CALCULOS)
             {
-                Serial.println("posision : ");
+                Serial.print("posision : ");
                 Serial.println(position);
             }
             proporcional = (position) - (setPoint);
 
             if (DEBUG_CALCULOS)
             {
-                Serial.println("proporcional : ");
+                Serial.print("proporcional : ");
                 Serial.println(proporcional);
             }
 
             derivativa = (proporcional - last);
 
-            // integral = (integral + proporcional);
+             //integral = (integral + proporcional);
 
             float speed = (proporcional * kp) + (derivativa * kd) + (integral * ki);
 
+            last = proporcional;
+
             if (DEBUG_CALCULOS)
             {
-                Serial.println("speed : ");
+                Serial.print("speed : ");
                 Serial.println(speed);
             }
             pidIzq = (velocidadPuntaIzq + speed);
             pidDer = (velocidadPuntaDer - speed);
 
-            if (pidIzq > maxSpeed)
-                pidIzq = maxSpeed;
-            if (pidDer < minSpeed)
-                pidDer = minSpeed;
+            if (pidIzq > maxSpeed) pidIzq = maxSpeed;
+            else if (pidIzq < minSpeed ) pidIzq = minSpeed;
+            
+            if (pidDer < minSpeed) pidDer = minSpeed;
+            else  if (pidDer >maxSpeed) pidDer = maxSpeed;
+            if(position < 2200) {
+                pidIzq = minSpeed;
+                pidDer = pidDer*0.35;
+            }
+  
 
             if (DEBUG_CALCULOS)
             {
-                bt.println("velocidad motor derecho: ");
-                bt.println(pidDer);
-                bt.println("velocidad motor izquierdo: ");
-                bt.println(pidIzq);
+                Serial.print("velocidad motor derecho: ");
+                Serial.println(pidDer);
+                Serial.print("velocidad motor izquierdo: ");
+                Serial.println(pidIzq);
             }
+
             ////////////////////////////////
             motorDer->GoAvance(pidDer);
             motorIzq->GoAvance(pidIzq);
             ////////////////////////////////
-            last = proporcional;
-            if (DEBUG_CALCULOS)
-            {
-                Serial.println("posision : ");
-                Serial.println(position);
-            }
+
+            
+
+            
             if (BTON)
             {
                 bt.println("valor kp");
@@ -252,7 +265,7 @@ void loop()
                 bt.println(ki);
             }
             if (DEBUG_CALCULOS)
-                delay(1000);
+                delay(2000);
         }
     }
 }
